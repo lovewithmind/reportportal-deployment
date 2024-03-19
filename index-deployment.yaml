@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: ./kompose convert
+    kompose.version: 1.26.0 (40646f47)
+    traefik.expose: "true"
+    traefik.http.routers.index.rule: PathPrefix(`/`)
+    traefik.http.routers.index.service: index
+    traefik.http.services.index.loadbalancer.server.port: "8080"
+    traefik.http.services.index.loadbalancer.server.scheme: http
+  creationTimestamp: null
+  labels:
+    io.kompose.service: index
+  name: index
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: index
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: ./kompose convert
+        kompose.version: 1.26.0 (40646f47)
+        traefik.expose: "true"
+        traefik.http.routers.index.rule: PathPrefix(`/`)
+        traefik.http.routers.index.service: index
+        traefik.http.services.index.loadbalancer.server.port: "8080"
+        traefik.http.services.index.loadbalancer.server.scheme: http
+      creationTimestamp: null
+      labels:
+        io.kompose.network/reportportal: "true"
+        io.kompose.service: index
+    spec:
+      containers:
+        - env:
+            - name: LB_URL
+              value: http://gateway:8081
+            - name: TRAEFIK_V2_MODE
+              value: "true"
+          image: reportportal/service-index:5.11.0
+          livenessProbe:
+            exec:
+              command:
+                - wget -q --spider http://0.0.0.0:8080/health
+            failureThreshold: 10
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 30
+          name: reportportal-index
+          resources: {}
+      restartPolicy: Always
+status: {}

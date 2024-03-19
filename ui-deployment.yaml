@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: ./kompose convert
+    kompose.version: 1.26.0 (40646f47)
+    traefik.expose: "true"
+    traefik.http.middlewares.ui-strip-prefix.stripprefix.prefixes: /ui
+    traefik.http.routers.ui.middlewares: ui-strip-prefix@docker
+    traefik.http.routers.ui.rule: PathPrefix(`/ui`)
+    traefik.http.routers.ui.service: ui
+    traefik.http.services.ui.loadbalancer.server.port: "8080"
+    traefik.http.services.ui.loadbalancer.server.scheme: http
+  creationTimestamp: null
+  labels:
+    io.kompose.service: ui
+  name: ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: ui
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: ./kompose convert
+        kompose.version: 1.26.0 (40646f47)
+        traefik.expose: "true"
+        traefik.http.middlewares.ui-strip-prefix.stripprefix.prefixes: /ui
+        traefik.http.routers.ui.middlewares: ui-strip-prefix@docker
+        traefik.http.routers.ui.rule: PathPrefix(`/ui`)
+        traefik.http.routers.ui.service: ui
+        traefik.http.services.ui.loadbalancer.server.port: "8080"
+        traefik.http.services.ui.loadbalancer.server.scheme: http
+      creationTimestamp: null
+      labels:
+        io.kompose.network/reportportal: "true"
+        io.kompose.service: ui
+    spec:
+      containers:
+        - env:
+            - name: RP_SERVER_PORT
+              value: "8080"
+          image: reportportal/service-ui:5.11.0
+          livenessProbe:
+            exec:
+              command:
+                - wget -q --spider http://0.0.0.0:8080/health
+            failureThreshold: 10
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 30
+          name: reportportal-ui
+          resources: {}
+      restartPolicy: Always
+status: {}

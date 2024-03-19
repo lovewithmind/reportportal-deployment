@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: ./kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: metrics-gatherer
+  name: metrics-gatherer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: metrics-gatherer
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: ./kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/reportportal: "true"
+        io.kompose.service: metrics-gatherer
+    spec:
+      containers:
+        - env:
+            - name: ALLOWED_END_TIME
+              value: "08:00"
+            - name: ALLOWED_START_TIME
+              value: "22:00"
+            - name: AMQP_URL
+              value: amqp://rabbitmq:rabbitmq@rabbitmq:5672
+            - name: AMQP_VIRTUAL_HOST
+              value: analyzer
+            - name: ES_HOST
+              value: http://opensearch:9200
+            - name: LOGGING_LEVEL
+              value: info
+            - name: POSTGRES_DB
+              value: reportportal
+            - name: POSTGRES_HOST
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: rppass
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: rpuser
+          image: reportportal/service-metrics-gatherer:5.11.0
+          name: reportportal-metrics-gatherer
+          resources: {}
+      restartPolicy: Always
+status: {}

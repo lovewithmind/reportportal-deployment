@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: ./kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: gateway
+  name: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: gateway
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: ./kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/reportportal: "true"
+        io.kompose.service: gateway
+    spec:
+      containers:
+        - args:
+            - --providers.docker=true
+            - --providers.docker.constraints=Label(`traefik.expose`, `true`)
+            - --entrypoints.web.address=:8080
+            - --entrypoints.traefik.address=:8081
+            - --api.dashboard=true
+            - --api.insecure=true
+          image: traefik:v2.0.7
+          name: traefik
+          ports:
+            - containerPort: 8080
+            - containerPort: 8081
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/run/docker.sock
+              name: gateway-claim0
+      restartPolicy: Always
+      volumes:
+        - name: gateway-claim0
+          persistentVolumeClaim:
+            claimName: gateway-claim0
+status: {}

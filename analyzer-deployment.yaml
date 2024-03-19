@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: ./kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: analyzer
+  name: analyzer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: analyzer
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: ./kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/reportportal: "true"
+        io.kompose.service: analyzer
+    spec:
+      containers:
+        - env:
+            - name: AMQP_EXCHANGE_NAME
+              value: analyzer-default
+            - name: AMQP_URL
+              value: amqp://rabbitmq:rabbitmq@rabbitmq:5672
+            - name: AMQP_VIRTUAL_HOST
+              value: analyzer
+            - name: ANALYZER_BINARYSTORE_TYPE
+              value: filesystem
+            - name: ES_HOSTS
+              value: http://opensearch:9200
+            - name: LOGGING_LEVEL
+              value: info
+          image: reportportal/service-auto-analyzer:5.11.0
+          name: reportportal-analyzer
+          resources: {}
+          volumeMounts:
+            - mountPath: /data/storage
+              name: storage
+      restartPolicy: Always
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: storage
+status: {}

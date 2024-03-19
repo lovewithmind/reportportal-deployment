@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: ./kompose convert
+    kompose.version: 1.26.0 (40646f47)
+    traefik.expose: "true"
+    traefik.http.middlewares.api-strip-prefix.stripprefix.prefixes: /api
+    traefik.http.routers.api.middlewares: api-strip-prefix@docker
+    traefik.http.routers.api.rule: PathPrefix(`/api`)
+    traefik.http.routers.api.service: api
+    traefik.http.services.api.loadbalancer.server.port: "8585"
+    traefik.http.services.api.loadbalancer.server.scheme: http
+  creationTimestamp: null
+  labels:
+    io.kompose.service: api
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: api
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: ./kompose convert
+        kompose.version: 1.26.0 (40646f47)
+        traefik.expose: "true"
+        traefik.http.middlewares.api-strip-prefix.stripprefix.prefixes: /api
+        traefik.http.routers.api.middlewares: api-strip-prefix@docker
+        traefik.http.routers.api.rule: PathPrefix(`/api`)
+        traefik.http.routers.api.service: api
+        traefik.http.services.api.loadbalancer.server.port: "8585"
+        traefik.http.services.api.loadbalancer.server.scheme: http
+      creationTimestamp: null
+      labels:
+        io.kompose.network/reportportal: "true"
+        io.kompose.service: api
+    spec:
+      containers:
+        - env:
+            - name: AUDIT_LOGGER
+              value: "OFF"
+            - name: COM_TA_REPORTPORTAL_JOB_INTERRUPT_BROKEN_LAUNCHES_CRON
+              value: PT1H
+            - name: DATASTORE_TYPE
+              value: filesystem
+            - name: JAVA_OPTS
+              value: |
+                -Xmx1g  -XX:+HeapDumpOnOutOfMemoryError  -XX:HeapDumpPath=/tmp   -Dcom.sun.management.jmxremote.rmi.port=12349  -Dcom.sun.management.jmxremote  -Dcom.sun.management.jmxremote.local.only=false   -Dcom.sun.management.jmxremote.port=9010  -Dcom.sun.management.jmxremote.authenticate=false  -Dcom.sun.management.jmxremote.ssl=false  -Djava.rmi.server.hostname=0.0.0.0
+            - name: LOGGING_LEVEL_ORG_HIBERNATE_SQL
+              value: info
+            - name: MANAGEMENT_HEALTH_ELASTICSEARCH_ENABLED
+              value: "false"
+            - name: RP_AMQP_ANALYZER-VHOST
+              value: analyzer
+            - name: RP_AMQP_APIPASS
+              value: rabbitmq
+            - name: RP_AMQP_APIUSER
+              value: rabbitmq
+            - name: RP_AMQP_HOST
+              value: rabbitmq
+            - name: RP_AMQP_PASS
+              value: rabbitmq
+            - name: RP_AMQP_PORT
+              value: "5672"
+            - name: RP_AMQP_USER
+              value: rabbitmq
+            - name: RP_DB_HOST
+              value: postgres
+            - name: RP_DB_NAME
+              value: reportportal
+            - name: RP_DB_PASS
+              value: rppass
+            - name: RP_DB_USER
+              value: rpuser
+            - name: RP_ENVIRONMENT_VARIABLE_ALLOW_DELETE_ACCOUNT
+              value: "false"
+            - name: RP_ENVIRONMENT_VARIABLE_PATTERN-ANALYSIS_BATCH-SIZE
+              value: "100"
+            - name: RP_ENVIRONMENT_VARIABLE_PATTERN-ANALYSIS_CONSUMERS-COUNT
+              value: "1"
+            - name: RP_ENVIRONMENT_VARIABLE_PATTERN-ANALYSIS_PREFETCH-COUNT
+              value: "1"
+            - name: RP_JOBS_BASEURL
+              value: http://jobs:8686
+            - name: RP_REQUESTLOGGING
+              value: "false"
+          image: reportportal/service-api:5.11.0
+          livenessProbe:
+            exec:
+              command:
+                - curl -f http://0.0.0.0:8585/health
+            failureThreshold: 10
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 30
+          name: reportportal-api
+          resources: {}
+          volumeMounts:
+            - mountPath: /data/storage
+              name: storage
+      restartPolicy: Always
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: storage
+status: {}
